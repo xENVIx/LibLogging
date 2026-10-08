@@ -27,6 +27,23 @@ namespace LibLogging_10
             _line = line;
         }
 
+        /// <summary>
+        /// Used for messages coming in through Microsoft.Extensions.Logging.ILogger, where no
+        /// caller member/file/line information is available. <paramref name="source"/> is written
+        /// in place of the [member:file:line] block.
+        /// </summary>
+        public LogMessage(String message, Enums.ELogLevel logLevel, String source, Exception? ex = null)
+        {
+            _created = DateTime.Now;
+            _message = message;
+            _level = logLevel;
+            _ex = ex;
+            _source = source;
+            _member = "";
+            _file = "";
+            _line = 0;
+        }
+
         #endregion // public
 
         #endregion // constructors
@@ -55,21 +72,25 @@ namespace LibLogging_10
             get
             {
                 String message;
-                if (_level == ELogLevel.EXCEPTION)
-                {
-                    message = $"{_ex}";
-                    _level = ELogLevel.EXCEPTION;
-                }
-                else if (_level == ELogLevel.ERROR && _ex != null)
-                {
-                    message = $"{_message}: {_ex}";
-                }
-                else
+                if (_ex == null)
                 {
                     message = _message;
                 }
+                else if (String.IsNullOrEmpty(_message))
+                {
+                    message = $"{_ex}";
+                }
+                else
+                {
+                    message = $"{_message}: {_ex}";
+                }
 
                 String timeStamp = String.Format("{0:00}-{1:00}-{2:00} {3:00}:{4:00}:{5:00}.{6:000}", _created.Year, _created.Month, _created.Day, _created.Hour, _created.Minute, _created.Second, _created.Millisecond);
+
+                if (_source != null)
+                {
+                    return $"{timeStamp} | ({(int)_level}) | [{_source}] | {message}";
+                }
 
                 String fileName = "";
                 try
@@ -111,6 +132,8 @@ namespace LibLogging_10
         private String _member;
         private String _file;
         private int _line;
+
+        private String? _source;
 
         #endregion // variables
 

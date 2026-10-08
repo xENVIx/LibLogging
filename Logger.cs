@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using LibUtil_10.FileTools;
 using System.Runtime.CompilerServices;
 
-using LibUtil_10.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace LibLogging_10
 {
@@ -26,6 +26,8 @@ namespace LibLogging_10
     //**//              v. 2 (20251123) added the ability to create a logbook based on  //**//
     //**//              String name instead of being confined to what is available in   //**//
     //**//              The ELogBooks enumerator                                        //**//
+    //**//              v. 3 implements Microsoft.Extensions.Logging.ILogger in place   //**//
+    //**//              of LibUtil_10.Interfaces.ILogger                                //**//
     //**//                                                                              //**//
     //**//******************************************************************************//**//
     //**//******************************************************************************//**//
@@ -127,6 +129,39 @@ namespace LibLogging_10
 
         #endregion // logging_methods
 
+        #region ILOGGER
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, String> formatter)
+        {
+            if (!IsEnabled(logLevel)) return;
+
+            ArgumentNullException.ThrowIfNull(formatter);
+
+            String message = formatter(state, exception);
+
+            if (String.IsNullOrEmpty(message) && exception == null) return;
+
+            String source = eventId == default ? _logbookName : $"{_logbookName}:{eventId}";
+
+            LogMessage logMsg = new LogMessage(message, ToELogLevel(logLevel), source, exception);
+            _logProcessor.Enqueue(logMsg);
+        }
+
+        public bool IsEnabled(LogLevel logLevel)
+        {
+            if (logLevel == LogLevel.None) return false;
+
+            return ToELogLevel(logLevel) <= _logLevel;
+        }
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull
+        {
+            // Scopes are not supported by the logbook.
+            return null;
+        }
+
+        #endregion // iLogger
+
         public void Dispose()
         {
             if (_disposed) return;
@@ -153,6 +188,20 @@ namespace LibLogging_10
         #endregion // public
 
         #region PRIVATE
+
+        private static ELogLevel ToELogLevel(LogLevel logLevel)
+        {
+            return logLevel switch
+            {
+                LogLevel.Trace => ELogLevel.VERBOSE,
+                LogLevel.Debug => ELogLevel.DEBUG,
+                LogLevel.Information => ELogLevel.INFO,
+                LogLevel.Warning => ELogLevel.WARN,
+                LogLevel.Error => ELogLevel.ERROR,
+                LogLevel.Critical => ELogLevel.EXCEPTION,
+                _ => throw new ArgumentOutOfRangeException(nameof(logLevel), logLevel, null),
+            };
+        }
 
 
         /// <summary>
