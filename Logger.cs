@@ -52,7 +52,8 @@ namespace LibLogging_10
 
         private FileStream _logStream;
 
-        private Enums.ELogLevel _logLevel;
+        //private Enums.ELogLevel _logLevel;
+        private LogLevel _logLevel;
 
 
         private String _dirFilePath = "";
