@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 
 using System.Runtime.CompilerServices;
 
+using Microsoft.Extensions.Logging;
+
 namespace LibLogging_10
 {
     public class LogMessage
@@ -16,7 +18,7 @@ namespace LibLogging_10
 
         #region PUBLIC
 
-        public LogMessage(String message, Enums.ELogLevel logLevel, String member, String file, int line, Exception? ex = null)
+        public LogMessage(String message, LogLevel logLevel, String member, String file, int line, Exception? ex = null)
         {
             _created = DateTime.Now;
             _message = message;
@@ -32,7 +34,7 @@ namespace LibLogging_10
         /// caller member/file/line information is available. <paramref name="source"/> is written
         /// in place of the [member:file:line] block.
         /// </summary>
-        public LogMessage(String message, Enums.ELogLevel logLevel, String source, Exception? ex = null)
+        public LogMessage(String message, LogLevel logLevel, String source, Exception? ex = null)
         {
             _created = DateTime.Now;
             _message = message;
@@ -126,7 +128,7 @@ namespace LibLogging_10
 
         private String _message = "";
         private Exception? _ex;
-        private ELogLevel _level;
+        private LogLevel _level;
         private DateTime _created = DateTime.MinValue;
 
         private String _member;

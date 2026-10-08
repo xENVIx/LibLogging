@@ -52,7 +52,6 @@ namespace LibLogging_10
 
         private FileStream _logStream;
 
-        //private Enums.ELogLevel _logLevel;
         private LogLevel _logLevel;
 
 
@@ -71,7 +70,7 @@ namespace LibLogging_10
 
         #region PUBLIC
 
-        public Logger(String logbookName, ELogLevel logLevel, CancellationToken ct, bool storeInWorkingDirectory = false)
+        public Logger(String logbookName, LogLevel logLevel, CancellationToken ct, bool storeInWorkingDirectory = false)
         {
             InitializeParameters(logbookName.ToLower().Replace(" ", "_"), logLevel, ct, storeInWorkingDirectory);  
         }
@@ -89,13 +88,13 @@ namespace LibLogging_10
 
         public void Exception(Exception ex, [CallerMemberName] String member = "", [CallerFilePath] String file = "", [CallerLineNumber] int line = 0)
         {
-            LogMessage logMsg = new LogMessage("", ELogLevel.EXCEPTION, member, file, line, ex);
+            LogMessage logMsg = new LogMessage("", LogLevel.Critical, member, file, line, ex);
             _logProcessor.Enqueue(logMsg);
         }
 
         public void Info(String message, [CallerMemberName] String member = "", [CallerFilePath] String file = "", [CallerLineNumber] int line = 0)
         {
-            LogMessage logMsg = new LogMessage(message, ELogLevel.INFO,member, file, line);
+            LogMessage logMsg = new LogMessage(message, LogLevel.Information, member, file, line);
             _logProcessor.Enqueue(logMsg);
         }
 
@@ -106,25 +105,25 @@ namespace LibLogging_10
 
         public void Error(String message, Exception? ex, [CallerMemberName] String member = "", [CallerFilePath] String file = "", [CallerLineNumber] int line = 0)
         {
-            LogMessage logMsg = new LogMessage(message, ELogLevel.ERROR, member, file, line, ex);
+            LogMessage logMsg = new LogMessage(message, LogLevel.Error, member, file, line, ex);
             _logProcessor.Enqueue(logMsg);
         }
 
         public void Warn(String message, [CallerMemberName] String member = "", [CallerFilePath] String file = "", [CallerLineNumber] int line = 0)
         {
-            LogMessage logMsg = new LogMessage(message, ELogLevel.WARN, member, file, line);
+            LogMessage logMsg = new LogMessage(message, LogLevel.Warning, member, file, line);
             _logProcessor.Enqueue(logMsg);
         }
 
         public void Debug(String message, [CallerMemberName] String member = "", [CallerFilePath] String file = "", [CallerLineNumber] int line = 0)
         {
-            LogMessage logMsg = new LogMessage(message, ELogLevel.DEBUG, member, file, line);
+            LogMessage logMsg = new LogMessage(message, LogLevel.Debug, member, file, line);
             _logProcessor.Enqueue(logMsg);
         }
 
         public void Verbose(String message, [CallerMemberName] String member = "", [CallerFilePath] String file = "", [CallerLineNumber] int line = 0)
         {
-            LogMessage logMsg = new LogMessage(message, ELogLevel.VERBOSE, member, file, line);
+            LogMessage logMsg = new LogMessage(message, LogLevel.Trace, member, file, line);
             _logProcessor.Enqueue(logMsg);
         }
 
@@ -144,7 +143,7 @@ namespace LibLogging_10
 
             String source = eventId == default ? _logbookName : $"{_logbookName}:{eventId}";
 
-            LogMessage logMsg = new LogMessage(message, ToELogLevel(logLevel), source, exception);
+            LogMessage logMsg = new LogMessage(message, logLevel, source, exception);
             _logProcessor.Enqueue(logMsg);
         }
 
@@ -152,7 +151,7 @@ namespace LibLogging_10
         {
             if (logLevel == LogLevel.None) return false;
 
-            return ToELogLevel(logLevel) <= _logLevel;
+            return logLevel >= _logLevel;
         }
 
         public IDisposable? BeginScope<TState>(TState state) where TState : notnull
@@ -190,20 +189,6 @@ namespace LibLogging_10
 
         #region PRIVATE
 
-        private static ELogLevel ToELogLevel(LogLevel logLevel)
-        {
-            return logLevel switch
-            {
-                LogLevel.Trace => ELogLevel.VERBOSE,
-                LogLevel.Debug => ELogLevel.DEBUG,
-                LogLevel.Information => ELogLevel.INFO,
-                LogLevel.Warning => ELogLevel.WARN,
-                LogLevel.Error => ELogLevel.ERROR,
-                LogLevel.Critical => ELogLevel.EXCEPTION,
-                _ => throw new ArgumentOutOfRangeException(nameof(logLevel), logLevel, null),
-            };
-        }
-
 
         /// <summary>
         /// Takes parameters from the constructors and centralizes their managment and usage here.
@@ -212,7 +197,7 @@ namespace LibLogging_10
         /// <param name="logLevel"></param>
         /// <param name="ct"></param>
         /// <param name="storeInWorkingDirectory"></param>
-        private void InitializeParameters(String logBookName, ELogLevel logLevel, CancellationToken ct, bool storeInWorkingDirectory)
+        private void InitializeParameters(String logBookName, LogLevel logLevel, CancellationToken ct, bool storeInWorkingDirectory)
         {
             _logbookName = logBookName;
 
